@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SimuRestaurante — Parcial Estadística II</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #0b0e14;
+  --bg-card: #141922;
+  --bg-card-alt: #1a2030;
+  --bg-surface: #1e2636;
+  --accent-teal: #00d4aa;
+  --accent-teal-dim: rgba(0,212,170,0.15);
+  --accent-coral: #ff6b6b;
+  --accent-coral-dim: rgba(255,107,107,0.12);
+  --accent-gold: #fbbf24;
+  --accent-gold-dim: rgba(251,191,36,0.12);
+  --accent-violet: #a78bfa;
+  --accent-violet-dim: rgba(167,139,250,0.12);
+  --accent-sky: #38bdf8;
+  --accent-sky-dim: rgba(56,189,248,0.12);
+  --text-primary: #f0ece4;
+  --text-secondary: #9ca3af;
+  --text-dim: #6b7280;
+  --border: rgba(255,255,255,0.08);
+  --font-display: 'Sora', sans-serif;
+  --font-body: 'Source Serif 4', Georgia, serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --green: #22c55e;
+  --red: #ef4444;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  min-height: 100dvh;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* ── Top Bar ── */
+.top-bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(11,14,20,0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 20px;
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; flex-wrap: wrap;
+}
+.top-bar .timer {
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--accent-teal);
+  min-width: 80px; text-align: center;
+}
+.top-bar .timer.warning { color: var(--accent-gold); }
+.top-bar .timer.critical { color: var(--accent-coral); animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+.top-bar .balance {
+  font-family: var(--font-mono);
+  font-size: 1.2rem; font-weight: 600;
+  padding: 4px 14px; border-radius: 20px;
+}
+.balance.positive { background: rgba(34,197,94,0.15); color: var(--green); }
+.balance.negative { background: rgba(239,68,68,0.15); color: var(--red); }
+
+.top-bar .act-label {
+  font-family: var(--font-display);
+  font-size: 0.85rem; color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: 1px;
+}
+
+.progress-track {
+  position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 101;
+  background: rgba(255,255,255,0.05);
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-teal), var(--accent-sky), var(--accent-violet));
+  transition: width 0.6s cubic-bezier(0.22,1,0.36,1);
+  box-shadow: 0 0 12px var(--accent-teal);
+}
+
+/* ── Main Content ── */
+.container {
+  max-width: 800px; margin: 0 auto;
+  padding: 80px 20px 40px;
+}
+
+/* ── Screens ── */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ── Start Screen ── */
+.start-screen { text-align: center; padding-top: 60px; }
+.start-screen h1 {
+  font-family: var(--font-display);
+  font-size: 2.4rem; font-weight: 800;
+  background: linear-gradient(135deg, var(--accent-teal), var(--accent-sky));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+}
+.start-screen .subtitle {
+  font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 30px;
+}
+.start-screen .story {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px; padding: 30px;
+  text-align: left; margin-bottom: 30px;
+  line-height: 1.8; color: var(--text-secondary);
+}
+.start-screen .story strong { color: var(--accent-teal); }
+.start-screen .story em { color: var(--accent-gold); font-style: normal; font-weight: 600; }
+
+.names-input {
+  display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; justify-content: center;
+}
+.names-input input {
+  background: var(--bg-surface); border: 1px solid var(--border);
+  color: var(--text-primary); font-family: var(--font-display);
+  padding: 12px 18px; border-radius: 12px; font-size: 1rem;
+  width: 240px; outline: none; transition: border-color 0.3s;
+}
+.names-input input:focus { border-color: var(--accent-teal); }
+.names-input input::placeholder { color: var(--text-dim); }
+
+.btn-start {
+  background: linear-gradient(135deg, var(--accent-teal), #00b894);
+  color: var(--bg-deep); font-family: var(--font-display);
+  font-size: 1.1rem; font-weight: 700;
+  padding: 14px 40px; border: none; border-radius: 14px;
+  cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+}
+.btn-start:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,212,170,0.3); }
+.btn-start:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* ── Question Card ── */
+.q-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  animation: fadeIn 0.5s ease;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+.q-header {
+  padding: 20px 28px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.q-header .q-num {
+  font-family: var(--font-display); font-size: 0.8rem;
+  color: var(--accent-teal); text-transform: uppercase; letter-spacing: 1px;
+}
+.q-header .q-topic {
+  font-family: var(--font-display); font-size: 0.75rem;
+  color: var(--text-dim); background: var(--bg-surface);
+  padding: 4px 12px; border-radius: 20px;
+}
+
+.q-narrative {
+  padding: 20px 28px;
+  color: var(--text-secondary); font-size: 1.05rem; line-height: 1.8;
+}
+.q-narrative strong { color: var(--text-primary); }
+.q-narrative .highlight { color: var(--accent-gold); font-weight: 600; }
+.q-narrative .data-box {
+  background: var(--bg-surface);
+  border-left: 3px solid var(--accent-teal);
+  padding: 14px 18px; margin: 14px 0;
+  border-radius: 0 10px 10px 0;
+  font-family: var(--font-mono); font-size: 0.95rem;
+  color: var(--text-primary); line-height: 1.9;
+}
+
+.q-question {
+  padding: 0 28px 16px;
+  font-family: var(--font-display);
+  font-size: 1.05rem; font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* ── Options ── */
+.q-options { padding: 0 28px 24px; display: flex; flex-direction: column; gap: 10px; }
+
+.opt-btn {
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px; padding: 14px 18px;
+  color: var(--text-primary); font-family: var(--font-body);
+  font-size: 0.95rem; text-align: left;
+  cursor: pointer; transition: all 0.25s;
+  display: flex; align-items: flex-start; gap: 12px;
+}
+.opt-btn:hover { border-color: var(--accent-teal); background: var(--accent-teal-dim); }
+.opt-btn .opt-letter {
+  font-family: var(--font-display); font-weight: 700;
+  color: var(--accent-teal); min-width: 24px; flex-shrink: 0;
+}
+.opt-btn.selected { border-color: var(--accent-teal); background: var(--accent-teal-dim); }
+.opt-btn.correct { border-color: var(--green); background: rgba(34,197,94,0.15); }
+.opt-btn.wrong { border-color: var(--red); background: rgba(239,68,68,0.12); }
+.opt-btn:disabled { cursor: default; opacity: 0.85; }
+
+/* ── Calc Input ── */
+.calc-section {
+  padding: 0 28px 20px;
+}
+.calc-section label {
+  font-family: var(--font-display); font-size: 0.9rem;
+  color: var(--text-secondary); margin-bottom: 8px; display: block;
+}
+.calc-row {
+  display: flex; gap: 10px; align-items: center;
+}
+.calc-input {
+  background: var(--bg-surface); border: 1.5px solid var(--border);
+  color: var(--text-primary); font-family: var(--font-mono);
+  font-size: 1.1rem; padding: 12px 16px; border-radius: 12px;
+  width: 180px; outline: none; transition: border-color 0.3s;
+}
+.calc-input:focus { border-color: var(--accent-gold); }
+.calc-unit {
+  font-family: var(--font-mono); color: var(--text-dim); font-size: 0.9rem;
+}
+
+.btn-confirm {
+  background: var(--accent-teal); color: var(--bg-deep);
+  font-family: var(--font-display); font-weight: 700;
+  padding: 12px 28px; border: none; border-radius: 12px;
+  cursor: pointer; font-size: 0.95rem; margin: 16px 28px 24px;
+  transition: transform 0.2s;
+}
+.btn-confirm:hover { transform: translateY(-1px); }
+.btn-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Result Panel ── */
+.result-panel {
+  margin: 0 28px 24px;
+  border-radius: 14px; padding: 20px 22px;
+  animation: fadeIn 0.4s ease;
+}
+.result-panel.gain {
+  background: rgba(34,197,94,0.1);
+  border: 1px solid rgba(34,197,94,0.3);
+}
+.result-panel.loss {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.25);
+}
+.result-panel .result-amount {
+  font-family: var(--font-mono); font-size: 1.3rem; font-weight: 700;
+  margin-bottom: 8px;
+}
+.result-panel .result-amount.gain { color: var(--green); }
+.result-panel .result-amount.loss { color: var(--red); }
+.result-panel .result-explanation {
+  color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7;
+}
+.result-panel .result-explanation strong { color: var(--text-primary); }
+
+.btn-next {
+  background: var(--bg-surface); border: 1px solid var(--border);
+  color: var(--text-primary); font-family: var(--font-display);
+  font-weight: 600; padding: 12px 28px;
+  border-radius: 12px; cursor: pointer;
+  font-size: 0.95rem; margin: 0 28px 24px;
+  transition: all 0.25s;
+}
+.btn-next:hover { border-color: var(--accent-teal); background: var(--accent-teal-dim); }
+
+/* ── Act Transition ── */
+.act-transition {
+  text-align: center; padding: 60px 20px;
+  animation: fadeIn 0.6s ease;
+}
+.act-transition h2 {
+  font-family: var(--font-display); font-size: 1.8rem; font-weight: 700;
+  color: var(--accent-teal); margin-bottom: 10px;
+}
+.act-transition p {
+  color: var(--text-secondary); font-size: 1.05rem; max-width: 500px; margin: 0 auto 30px;
+}
+
+/* ── Final Screen ── */
+.final-screen { text-align: center; padding-top: 30px; }
+.final-screen h1 {
+  font-family: var(--font-display); font-size: 2rem; font-weight: 800;
+  margin-bottom: 6px;
+}
+.final-money {
+  font-family: var(--font-mono); font-size: 2.8rem; font-weight: 800;
+  margin: 16px 0;
+}
+.final-money.positive { color: var(--green); }
+.final-money.negative { color: var(--red); }
+
+.final-grade {
+  display: inline-block;
+  background: var(--bg-card); border: 2px solid var(--accent-teal);
+  border-radius: 20px; padding: 16px 40px; margin: 16px 0 24px;
+}
+.final-grade .label {
+  font-family: var(--font-display); font-size: 0.85rem;
+  color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;
+}
+.final-grade .grade {
+  font-family: var(--font-mono); font-size: 2.4rem; font-weight: 800;
+  color: var(--accent-gold);
+}
+
+.decisions-log {
+  text-align: left; margin-top: 24px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 16px; overflow: hidden;
+}
+.decisions-log h3 {
+  font-family: var(--font-display); font-size: 1rem;
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+.log-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 20px; border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+.log-item:last-child { border-bottom: none; }
+.log-item .log-q { color: var(--text-secondary); flex: 1; }
+.log-item .log-result {
+  font-family: var(--font-mono); font-weight: 600; min-width: 100px; text-align: right;
+}
+.log-item .log-result.gain { color: var(--green); }
+.log-item .log-result.loss { color: var(--red); }
+
+.names-display {
+  font-family: var(--font-display); font-size: 1rem;
+  color: var(--text-secondary); margin-bottom: 10px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .container { padding: 70px 12px 30px; }
+  .q-narrative, .q-question, .q-options, .btn-confirm, .btn-next, .result-panel { padding-left: 18px; padding-right: 18px; }
+  .q-header { padding: 14px 18px; }
+  .start-screen h1 { font-size: 1.8rem; }
+  .top-bar { padding: 8px 12px; font-size: 0.85rem; }
+  .top-bar .timer { font-size: 1.1rem; }
+  .calc-row { flex-wrap: wrap; }
+  .names-input { flex-direction: column; align-items: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+<div class="top-bar" id="topBar" style="display:none;">
+  <span class="act-label" id="actLabel">Acto 1</span>
+  <span class="timer" id="timer">60:00</span>
+  <span class="balance positive" id="balance">$50.000.000</span>
+</div>
+
+<div class="container">
+  <!-- START -->
+  <div class="screen active" id="screenStart">
+    <div class="start-screen">
+      <h1>SimuRestaurante</h1>
+      <p class="subtitle">Parcial Estadística II — UTP 2026-1 — Valor: 3.0 / 5.0</p>
+      <div class="story">
+        <p>Felicitaciones. Acaban de ser nombrados <strong>gerentes de "Sabor Criollo"</strong>, una cadena de restaurantes colombiana con sedes en <strong>Pereira</strong>, <strong>Manizales</strong> y <strong>Armenia</strong>.</p>
+        <p style="margin-top:12px;">La cadena fue adquirida por un grupo inversionista que les asignó un presupuesto de <em>$50.000.000 COP</em> para diagnosticar, investigar y tomar decisiones estratégicas durante su primer día como gerentes.</p>
+        <p style="margin-top:12px;">Cada decisión que tomen tendrá <strong>consecuencias financieras reales</strong>. Usen sus conocimientos de estadística para maximizar las ganancias. Las decisiones por intuición sin fundamento les costarán caro.</p>
+        <p style="margin-top:16px;color:var(--accent-coral);font-weight:600;">Tienen exactamente 60 minutos. Pueden usar calculadora, Excel o lo que necesiten para los cálculos.</p>
+      </div>
+      <div class="names-input">
+        <input type="text" id="name1" placeholder="Nombre Estudiante 1" maxlength="40">
+        <input type="text" id="name2" placeholder="Nombre Estudiante 2" maxlength="40">
+      </div>
+      <button class="btn-start" id="btnStart" disabled>Asumir la Gerencia</button>
+    </div>
+  </div>
+
+  <!-- QUESTION -->
+  <div class="screen" id="screenQuestion"></div>
+
+  <!-- ACT TRANSITION -->
+  <div class="screen" id="screenTransition">
+    <div class="act-transition">
+      <h2 id="transTitle"></h2>
+      <p id="transDesc"></p>
+      <button class="btn-start" onclick="nextAfterTransition()">Continuar</button>
+    </div>
+  </div>
+
+  <!-- FINAL -->
+  <div class="screen" id="screenFinal">
+    <div class="final-screen">
+      <p class="names-display" id="finalNames"></p>
+      <h1>Jornada Terminada</h1>
+      <div class="final-money" id="finalMoney"></div>
+      <div class="final-grade">
+        <div class="label">Nota del simulador</div>
+        <div class="grade" id="finalGrade"></div>
+      </div>
+      <div class="decisions-log" id="decisionsLog">
+        <h3>Resumen de Decisiones</h3>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════
+let state = {
+  balance: 50000000,
+  currentQ: 0,
+  timerSeconds: 3600,
+  timerInterval: null,
+  running: false,
+  log: [],
+  names: ['', ''],
+};
+
+const fmt = n => {
+  const s = Math.abs(n).toLocaleString('es-CO');
+  return (n < 0 ? '-' : '') + '$' + s;
+};
+
+// ═══════════════════════════════════════
+//  QUESTIONS DATABASE
+// ═══════════════════════════════════════
+const questions = [
+  // ─── ACTO 1: CONOCIENDO EL NEGOCIO ───
+  {
+    act: 1, actName: 'Conociendo el Negocio',
+    topic: 'Parámetro vs Estadístico',
+    narrative: `Su primer día como gerentes. El chef de la sede Pereira les dice: <strong>"El tiempo promedio de preparación de nuestro plato estrella es 12 minutos. Lo medí ayer con 5 pedidos."</strong>
+    <div class="data-box">Dato del chef: X̄ = 12 min (basado en 5 pedidos de un solo día)<br>La sede Pereira atiende ~200 pedidos de ese plato por semana.</div>
+    El gerente anterior quiere reestructurar toda la cocina basándose en ese número. Ustedes deben decidir:`,
+    question: '¿Confían en ese dato para reestructurar la operación de cocina?',
+    type: 'choice',
+    options: [
+      { text: 'Sí, 12 minutos es el dato real. El chef lo midió directamente, así que es el parámetro de la cocina.', correct: false },
+      { text: 'No. Es un estadístico basado en solo 5 pedidos. Esa muestra es muy pequeña y podría no representar la realidad. Necesitamos más datos antes de invertir.', correct: true },
+      { text: 'Sí, pero redondeémoslo a 15 minutos por seguridad y reestructuremos con ese valor.', correct: false },
+      { text: 'No importa el tamaño de muestra. Lo que importa es que el chef tiene experiencia y conoce su cocina.', correct: false },
+    ],
+    correctIdx: 1,
+    gain: 3000000,
+    loss: -4000000,
+    explanation: `<strong>12 min es un estadístico</strong> (calculado de una muestra de 5 pedidos), NO un parámetro. Con solo 5 observaciones de un solo día, la variabilidad es enorme. Tomar decisiones de inversión con una muestra tan pequeña es arriesgado. Se necesita una muestra más representativa (más pedidos, varios días).`,
+  },
+  {
+    act: 1, actName: 'Conociendo el Negocio',
+    topic: 'Propiedades de Estimadores',
+    narrative: `El contador les presenta dos métodos para estimar la <strong>demanda diaria</strong> de la cadena:
+    <div class="data-box"><strong>Método A:</strong> Promedio de los últimos 7 días → En promedio acierta el valor real, pero varía mucho día a día (a veces predice 80 y a veces 200, cuando el real es 140).<br><br><strong>Método B:</strong> Modelo del gerente anterior → Siempre predice entre 130 y 150, pero consistentemente subestima por 5 unidades (predice 135 cuando el real es 140).</div>
+    Necesitan elegir uno para hacer los pedidos de insumos de mañana. Un error grande = comida desperdiciada o clientes sin atender.`,
+    question: '¿Qué método eligen para los pedidos de insumos?',
+    type: 'choice',
+    options: [
+      { text: 'Método A: es insesgado (en promedio acierta). La teoría dice que los estimadores insesgados son siempre mejores.', correct: false },
+      { text: 'Método B: aunque tiene un sesgo de 5 unidades, es mucho más consistente. Para pedir insumos diarios, prefiero predecible y ajusto los 5 de más manualmente.', correct: true },
+      { text: 'Ninguno. Sin un estimador perfecto (insesgado Y eficiente), es mejor pedir siempre lo mismo.', correct: false },
+      { text: 'Método A, pero solo usando los datos de los viernes porque son los días más rentables.', correct: false },
+    ],
+    correctIdx: 1,
+    gain: 4000000,
+    loss: -3000000,
+    explanation: `En la práctica, <strong>un estimador con poco sesgo y baja varianza</strong> suele ser más útil que uno insesgado pero muy variable. El Método B es consistente (eficiente) y su sesgo es conocido y corregible (+5). Para decisiones operativas diarias, la predictibilidad importa más que la perfección teórica. Un estimador insesgado con varianza enorme puede causar pérdidas severas día a día.`,
+  },
+  {
+    act: 1, actName: 'Conociendo el Negocio',
+    topic: 'Teorema Central del Límite',
+    narrative: `La administradora de Manizales les muestra datos del <strong>tiempo de espera de los clientes</strong>. La distribución es claramente <strong>asimétrica a la derecha</strong> (muchos clientes esperan poco, pero algunos esperan muchísimo).
+    <div class="data-box">Distribución de tiempos individuales: NO normal (asimétrica derecha)<br>Promedio individual: μ = 8 min, σ = 6 min<br>La administradora propone tomar muestras de n = 40 clientes cada semana y monitorear el promedio.</div>
+    Les pregunta si puede usar la distribución normal para calcular probabilidades sobre el promedio semanal.`,
+    question: '¿Puede usar la distribución normal para analizar el promedio de muestras de 40 clientes?',
+    type: 'choice',
+    options: [
+      { text: 'No. Si los datos individuales no son normales, los promedios tampoco lo serán. Necesita transformar los datos primero.', correct: false },
+      { text: 'Sí, gracias al Teorema Central del Límite. Con n = 40, la distribución de X̄ será aproximadamente normal sin importar que los datos individuales sean asimétricos.', correct: true },
+      { text: 'Solo si elimina los valores extremos (los clientes que esperan mucho) para que los datos se vuelvan normales.', correct: false },
+      { text: 'Necesita al menos n = 100 para que el TCL funcione con datos tan asimétricos.', correct: false },
+    ],
+    correctIdx: 1,
+    gain: 3000000,
+    loss: -3500000,
+    explanation: `El <strong>Teorema Central del Límite</strong> garantiza que la distribución de X̄ se aproxima a la normal cuando n es suficientemente grande (generalmente n ≥ 30), <strong>sin importar la forma de la distribución original</strong>. Con n = 40, el promedio muestral será aproximadamente normal con media μ = 8 y SE = σ/√n = 6/√40 ≈ 0.95 min.`,
+  },
+  {
+    act: 1, actName: 'Conociendo el Negocio',
+    topic: 'Error Estándar y Tamaño de Muestra',
+    narrative: `Deciden hacer una auditoría del <strong>gasto promedio por cliente</strong>. Actualmente monitorean con muestras de <strong>n = 25</strong> clientes por semana y el error estándar es de <span class="highlight">$2.400</span>.
+    <div class="data-box">Monitoreo actual: n = 25, SE = $2.400<br>σ poblacional se mantiene constante</div>
+    El inversionista quiere que el error se reduzca a <strong>$1.200</strong> (la mitad). Les pregunta cuántos clientes deberían muestrear por semana.`,
+    question: '¿A cuánto deben aumentar el tamaño de muestra para reducir el SE a la mitad?',
+    type: 'choice',
+    options: [
+      { text: 'n = 50 (duplicar la muestra para reducir el SE a la mitad)', correct: false },
+      { text: 'n = 75 (triplicar la muestra)', correct: false },
+      { text: 'n = 100 (cuadruplicar la muestra, porque SE = σ/√n y la relación es con la raíz cuadrada)', correct: true },
+      { text: 'n = 200 (hay que multiplicar por 8 para reducir a la mitad)', correct: false },
+    ],
+    correctIdx: 2,
+    gain: 4000000,
+    loss: -5000000,
+    explanation: `SE = σ/√n. Para reducir SE a la mitad, necesitas que √n se duplique, es decir, <strong>n se cuadruplica</strong>. De n=25 a n=100: SE nuevo = σ/√100 = σ/10. SE original = σ/√25 = σ/5. Efectivamente σ/10 = (σ/5)/2. La relación entre precisión y tamaño de muestra es cuadrática: <strong>duplicar la precisión cuesta 4 veces más muestra</strong>.`,
+  },
+
+  // ─── ACTO 2: INVESTIGACIÓN DE MERCADO ───
+  {
+    act: 2, actName: 'Investigación de Mercado',
+    topic: 'Tamaño de Muestra — Proporción con Piloto',
+    narrative: `Quieren lanzar un <strong>nuevo menú ejecutivo</strong>, pero antes necesitan saber qué proporción de clientes lo compraría. Hicieron una <strong>muestra piloto de 30 clientes</strong> y obtuvieron:
+    <div class="data-box">Muestra piloto: n₀ = 30<br>Clientes interesados: 18 de 30<br>p̂ = 18/30 = 0.60<br><br>Quieren un margen de error E = 0.05 con 95% de confianza (Z = 1.96)</div>
+    <strong>Calculen el tamaño de muestra necesario.</strong> La fórmula: n = (Z² × p̂ × (1−p̂)) / E²`,
+    question: 'Ingresen el tamaño de muestra calculado (redondeado hacia arriba):',
+    type: 'calc',
+    correctValue: 369,
+    tolerance: 0.05,
+    tolerancePartial: 0.15,
+    acceptRange: [355, 390],
+    unit: 'personas',
+    gain: 5000000,
+    loss: -4000000,
+    partialGain: 3000000,
+    explanation: `n = (1.96² × 0.60 × 0.40) / 0.05² = (3.8416 × 0.24) / 0.0025 = 0.9220 / 0.0025 = <strong>368.79 → 369 personas</strong>. Siempre se redondea hacia arriba porque no se puede encuestar a 0.79 de una persona. Con p̂ de la piloto, el n es menor que si usáramos p = 0.5 (que daría 385).`,
+  },
+  {
+    act: 2, actName: 'Investigación de Mercado',
+    topic: 'Tamaño de Muestra — Media con Piloto',
+    narrative: `Necesitan estimar el <strong>gasto promedio por cliente</strong> en la sede Armenia. Tomaron una <strong>muestra piloto de 20 clientes</strong>:
+    <div class="data-box">Muestra piloto: n₀ = 20<br>Gastos (en miles $): 25, 18, 32, 45, 22, 28, 35, 19, 41, 30, 27, 33, 24, 38, 21, 29, 36, 26, 31, 23<br><br>Quieren E = $3.000 con 95% de confianza (Z = 1.96)<br><br>Pista: primero calculen la desviación estándar muestral (s) de los datos</div>
+    Fórmula: n = (Z × s / E)²`,
+    question: 'Ingresen el tamaño de muestra calculado (redondeado hacia arriba):',
+    type: 'calc',
+    correctValue: 23,
+    tolerance: 0.15,
+    tolerancePartial: 0.40,
+    acceptRange: [20, 45],
+    unit: 'personas',
+    gain: 5000000,
+    loss: -4000000,
+    partialGain: 3000000,
+    explanation: `Primero: media = 29.15, desviación estándar muestral s ≈ 7.18 (en miles). Luego: n = (1.96 × 7.18 / 3)² = (14.07 / 3)² = (4.69)² = <strong>22.01 → pero en miles, E = 3 (miles)</strong>. Recalculando con s = 7,180 y E = 3,000: n = (1.96 × 7180 / 3000)² = (4.69)² ≈ 22.01 → <strong>n = 23</strong>. O si se usan los datos en unidades completas: s ≈ $7,180, n = (1.96 × 7180/3000)² ≈ 23. Nota: valores entre 22-45 se consideran aceptables dependiendo del redondeo.`,
+  },
+  {
+    act: 2, actName: 'Investigación de Mercado',
+    topic: 'Corrección por Población Finita',
+    narrative: `Para el estudio del menú ejecutivo, calcularon que necesitan <strong>n = 369 encuestas</strong>. Pero la sede de Armenia solo tiene <strong>N = 600 clientes registrados</strong> en su programa de fidelización.
+    <div class="data-box">n calculado (sin corrección) = 369<br>Población: N = 600 clientes<br>Fracción de muestreo: n/N = 369/600 = 0.615 → <span style="color:var(--accent-coral)">¡61.5%!</span><br><br>¿Se debe aplicar corrección por población finita?<br>Regla: se aplica cuando n/N > 0.05</div>`,
+    question: '¿Qué decisión toman respecto a la corrección por población finita?',
+    type: 'choice',
+    options: [
+      { text: 'No aplicar corrección. 369 es el número correcto y punto. La fórmula estándar no se modifica.', correct: false },
+      { text: 'Aplicar corrección: n_corregido = n₀/(1 + n₀/N). Como estamos muestreando más del 5% de la población, el n real necesario es menor. Esto nos ahorra dinero.', correct: true },
+      { text: 'Encuestar a todos los 600 clientes. Si la muestra es más de la mitad, mejor hacer un censo completo.', correct: false },
+      { text: 'Reducir el nivel de confianza a 90% para que el n baje naturalmente sin necesidad de corrección.', correct: false },
+    ],
+    correctIdx: 1,
+    gain: 4000000,
+    loss: -5000000,
+    explanation: `Con n/N = 61.5% (>> 5%), <strong>sí se debe aplicar corrección</strong>. n_corregido = 369 / (1 + 369/600) = 369 / (1 + 0.615) = 369 / 1.615 ≈ <strong>229 personas</strong>. La corrección reduce n de 369 a ~229 porque al cubrir una fracción tan grande de la población, cada encuesta aporta más información. Esto ahorra ~140 encuestas → menos costo.`,
+  },
+  {
+    act: 2, actName: 'Investigación de Mercado',
+    topic: 'Tamaño de Muestra sin Piloto (Caso Conservador)',
+    narrative: `Quieren evaluar la satisfacción de los clientes de <strong>domicilios</strong>, un servicio nuevo del que <strong>no tienen datos previos</strong>. Necesitan saber qué proporción está satisfecha.
+    <div class="data-box">No hay muestra piloto ni estudios previos<br>Margen de error deseado: E = 0.04 (4%)<br>Confianza: 95% (Z = 1.96)<br><br>Fórmula: n = Z² × p̂(1−p̂) / E²<br>¿Qué valor de p̂ deben usar?</div>`,
+    question: '¿Qué valor de p̂ utilizan y cuántas encuestas necesitan?',
+    type: 'choice',
+    options: [
+      { text: 'Usar p̂ = 0.5 (caso conservador). n = (1.96² × 0.25) / 0.04² = 600.25 → 601 encuestas. Es el n más grande posible, garantiza suficiente muestra sin importar la p real.', correct: true },
+      { text: 'Usar p̂ = 0.8 porque "en general los clientes de restaurantes están satisfechos". n = (1.96² × 0.16) / 0.04² ≈ 385.', correct: false },
+      { text: 'Sin datos previos no se puede calcular n. Hay que hacer primero una muestra piloto obligatoriamente.', correct: false },
+      { text: 'Usar p̂ = 0.5 pero con Z = 1.645 (90% de confianza) para ahorrar encuestas.', correct: false },
+    ],
+    correctIdx: 0,
+    gain: 4000000,
+    loss: -3500000,
+    explanation: `Sin datos previos, se usa <strong>p̂ = 0.5</strong> porque maximiza p(1−p) = 0.25, produciendo el n más grande posible. Es conservador: garantiza que el tamaño de muestra será suficiente sin importar cuál sea la proporción real. n = (1.96² × 0.5 × 0.5) / 0.04² = 0.9604 / 0.0016 = <strong>601 encuestas</strong>. No se reduce la confianza sin que el inversionista lo autorice.`,
+  },
+
+  // ─── ACTO 3: DECISIONES OPERATIVAS ───
+  {
+    act: 3, actName: 'Decisiones Operativas',
+    topic: 'Distribución Muestral de Medias',
+    narrative: `El proveedor de pollo les garantiza que sus pollos pesan <strong>μ = 2.5 kg</strong> en promedio con <strong>σ = 0.3 kg</strong>. Ustedes pesaron una muestra aleatoria de <strong>40 pollos</strong> del último pedido y obtuvieron:
+    <div class="data-box">Muestra: n = 40 pollos<br>Promedio muestral: X̄ = 2.38 kg<br>Proveedor dice: μ = 2.5 kg, σ = 0.3 kg<br><br>Estandarizar: Z = (X̄ − μ) / (σ/√n)</div>
+    Si el proveedor dice la verdad, ¿qué tan probable es obtener un promedio tan bajo como 2.38 kg?`,
+    question: '¿Confrontan al proveedor o aceptan que es variación normal?',
+    type: 'choice',
+    options: [
+      { text: 'Es variación normal. 2.38 está cerca de 2.5, no hay de qué preocuparse.', correct: false },
+      { text: 'Confrontar. Z = (2.38−2.5)/(0.3/√40) = −0.12/0.0474 = −2.53. La probabilidad de obtener un promedio tan bajo es ~0.6%. Esto es muy sospechoso.', correct: true },
+      { text: 'No se puede saber sin ver la distribución individual de los pollos. Si no es normal, el cálculo no sirve.', correct: false },
+      { text: 'Confrontar, pero solo porque 2.38 < 2.5. No hace falta calcular Z para saber que hay un problema.', correct: false },
+    ],
+    correctIdx: 1,
+    gain: 6000000,
+    loss: -5000000,
+    explanation: `Z = (2.38 − 2.5) / (0.3/√40) = −0.12 / 0.0474 = <strong>−2.53</strong>. P(Z < −2.53) ≈ 0.0057 (0.57%). Si el proveedor dice la verdad, obtener un promedio de 2.38 o menos en 40 pollos tiene menos del 1% de probabilidad. <strong>Esto es evidencia fuerte de que el peso real es menor al prometido.</strong> Sin estadística, podrían haber ignorado una diferencia de solo 120g que en volumen cuesta millones.`,
+  },
+  {
+    act: 3, actName: 'Decisiones Operativas',
+    topic: 'Diferencia de Medias',
+    narrative: `Las sedes de <strong>Pereira</strong> y <strong>Manizales</strong> tienen procesos de cocina diferentes. Quieren saber si el tiempo de servicio es realmente distinto o si es solo variación natural.
+    <div class="data-box"><strong>Pereira:</strong> X̄₁ = 18 min, σ₁ = 4 min, n₁ = 50<br><strong>Manizales:</strong> X̄₂ = 21 min, σ₂ = 5 min, n₂ = 45<br><br>Diferencia observada: 18 − 21 = −3 min<br>SE = √(σ₁²/n₁ + σ₂²/n₂)<br>Z = (X̄₁ − X̄₂) / SE</div>
+    Si no hay diferencia real, ¿es probable observar 3 minutos de diferencia?`,
+    question: '¿Invierten $8M en estandarizar los procesos de Manizales al estilo Pereira?',
+    type: 'choice',
+    options: [
+      { text: 'No. 3 minutos de diferencia es poco. Probablemente es variación del azar y no vale $8M.', correct: false },
+      { text: 'Sí. SE = √(16/50 + 25/45) = √(0.32 + 0.556) = √0.876 = 0.936. Z = −3/0.936 = −3.21. La diferencia es estadísticamente muy significativa. Vale la pena invertir.', correct: true },
+      { text: 'Necesitan más datos. Con solo 50 y 45 observaciones no se puede concluir nada.', correct: false },
+      { text: 'Sí, pero no por estadística sino porque 21 min es demasiado para cualquier restaurante.', correct: false },
+    ],
+    correctIdx: 1,
+    gain: 6000000,
+    loss: -6000000,
+    explanation: `SE = √(16/50 + 25/45) = √(0.32 + 0.556) = √0.876 = <strong>0.936 min</strong>. Z = (18−21)/0.936 = <strong>−3.21</strong>. P(|Z| > 3.21) < 0.002 (0.13%). <strong>La diferencia de 3 minutos es altamente significativa</strong>: no es azar. Las varianzas se suman (no se restan) porque cada muestra aporta su propia incertidumbre. Con evidencia tan fuerte, la inversión de $8M para estandarizar está justificada.`,
+  },
+  {
+    act: 3, actName: 'Decisiones Operativas',
+    topic: 'Proporción — Condiciones de Normalidad',
+    narrative: `Hicieron una encuesta de satisfacción en la sede <strong>Armenia</strong> con <strong>300 clientes</strong>. Resultado: <strong>234 satisfechos</strong> (p̂ = 0.78). Quieren reportar al inversionista que "el 78% de los clientes están satisfechos" con un análisis estadístico formal.
+    <div class="data-box">n = 300, p̂ = 234/300 = 0.78<br><br>Antes de usar la distribución normal para calcular intervalos o probabilidades, deben verificar:<br>np̂ ≥ 10 y n(1−p̂) ≥ 10</div>
+    Un analista junior les dice que no se puede usar la normal porque "p̂ = 0.78 no está cerca de 0.5".`,
+    question: '¿Se pueden usar métodos normales con estos datos?',
+    type: 'choice',
+    options: [
+      { text: 'El junior tiene razón. La normal solo funciona si p está cerca de 0.5. Con p̂ = 0.78 la distribución está sesgada.', correct: false },
+      { text: 'Sí. np̂ = 300×0.78 = 234 ≥ 10 y n(1−p̂) = 300×0.22 = 66 ≥ 10. Ambas condiciones se cumplen holgadamente. El junior confunde la condición.', correct: true },
+      { text: 'Sí, simplemente porque n = 300 > 30 se puede usar la normal por el TCL.', correct: false },
+      { text: 'No, porque 0.78 es mayor que 0.5 y la distribución queda asimétrica a la izquierda.', correct: false },
+    ],
+    correctIdx: 1,
+    gain: 3000000,
+    loss: -3000000,
+    explanation: `Las condiciones son <strong>np̂ ≥ 10</strong> y <strong>n(1−p̂) ≥ 10</strong>. Con n=300 y p̂=0.78: 300×0.78 = 234 ✓ y 300×0.22 = 66 ✓. Ambas se cumplen con creces. La condición NO es que p esté cerca de 0.5, sino que haya suficientes éxitos Y fracasos. El criterio "n > 30" es para medias (TCL), no para proporciones.`,
+  },
+  {
+    act: 3, actName: 'Decisiones Operativas',
+    topic: 'Proporción — Error Estándar Máximo',
+    narrative: `El equipo de marketing quiere estimar la proporción de clientes que usan la app de pedidos. Están debatiendo sobre el presupuesto de la encuesta.
+    <div class="data-box">La fórmula de SE de una proporción es: SE = √[p(1−p)/n]<br><br>El gerente de marketing dice: "Si la proporción real es muy alta (p = 0.9), el SE será máximo y necesitaremos más muestra."<br>El analista de datos dice: "No, el SE es máximo cuando p = 0.5."</div>`,
+    question: '¿Quién tiene razón y por qué importa para el presupuesto?',
+    type: 'choice',
+    options: [
+      { text: 'El gerente. Cuando p es alto, hay más variabilidad porque la mayoría está del mismo lado.', correct: false },
+      { text: 'El analista. p(1−p) se maximiza en p = 0.5 (da 0.25). En p = 0.9 da solo 0.09. Máxima incertidumbre = máximo SE = máxima muestra necesaria está en p = 0.5.', correct: true },
+      { text: 'Ambos están equivocados. El SE no depende de p, solo de n.', correct: false },
+      { text: 'Depende del nivel de confianza, no del valor de p.', correct: false },
+    ],
+    correctIdx: 1,
+    gain: 3000000,
+    loss: -2500000,
+    explanation: `El producto <strong>p(1−p) se maximiza en p = 0.5</strong> donde vale 0.25. En p = 0.9 vale 0.9×0.1 = 0.09, y en p = 0.1 vale lo mismo. Los extremos tienen MENOS variabilidad (si el 90% usa la app, hay poco que "variar"). Esto importa porque cuando no tenemos piloto, usamos p = 0.5 para obtener el <strong>n más conservador</strong>.`,
+  },
+
+  // ─── ACTO 4: EXPANSIÓN O QUIEBRA ───
+  {
+    act: 4, actName: 'Expansión o Quiebra',
+    topic: 'Diferencia de Proporciones',
+    narrative: `Momento de decisiones grandes. La satisfacción en las sedes:
+    <div class="data-box"><strong>Pereira:</strong> 156 satisfechos de 200 encuestados → p̂₁ = 0.78, n₁ = 200<br><strong>Armenia:</strong> 108 satisfechos de 150 encuestados → p̂₂ = 0.72, n₂ = 150<br><br>Diferencia observada: 0.78 − 0.72 = 0.06 (6 puntos porcentuales)<br>SE = √[p̂₁(1−p̂₁)/n₁ + p̂₂(1−p̂₂)/n₂]</div>
+    ¿La diferencia de 6 puntos es real o puede ser solo ruido muestral? Esto define dónde invierten $10M.`,
+    question: '¿Dónde invierten los $10M?',
+    type: 'choice',
+    options: [
+      { text: 'En Armenia. La diferencia de 6 puntos es clara: Pereira está mejor, Armenia necesita la inversión. No hace falta calcular más.', correct: false },
+      { text: 'En Pereira. Tiene mejor satisfacción, hay que potenciar lo que ya funciona.', correct: false },
+      { text: 'Calcular primero: SE = √[0.78×0.22/200 + 0.72×0.28/150] ≈ 0.0462. Z = 0.06/0.0462 ≈ 1.30. Con Z = 1.30 la diferencia NO es estadísticamente significativa. Invertir donde haya mayor retorno operativo, no por una diferencia que puede ser azar.', correct: true },
+      { text: 'Dividir $5M para cada sede. Así no se arriesga nada.', correct: false },
+    ],
+    correctIdx: 2,
+    gain: 8000000,
+    loss: -7000000,
+    explanation: `SE = √(0.78×0.22/200 + 0.72×0.28/150) = √(0.000858 + 0.001344) = √0.002202 = <strong>0.0469</strong>. Z = 0.06/0.0469 = <strong>1.28</strong>. P(|Z| > 1.28) ≈ 0.20 (20%). <strong>No hay evidencia estadística de que la satisfacción sea realmente diferente.</strong> La diferencia de 6 puntos puede ser simplemente variación muestral. Invertir $10M basándose en una diferencia no significativa sería un error costoso.`,
+  },
+  {
+    act: 4, actName: 'Expansión o Quiebra',
+    topic: 'Varianzas se Suman',
+    narrative: `El director financiero les presenta un análisis donde <strong>resta</strong> las varianzas de dos muestras para calcular la variabilidad de la diferencia entre las ventas de Pereira y Manizales.
+    <div class="data-box">Ventas Pereira: X̄₁ = $4.2M diarios, Var₁ = $0.8M²<br>Ventas Manizales: X̄₂ = $3.1M diarios, Var₂ = $0.5M²<br><br>Director calcula: Var(X̄₁ − X̄₂) = 0.8 − 0.5 = 0.3M²<br>"Resté las varianzas porque estamos restando las medias"</div>`,
+    question: '¿El director financiero tiene razón en restar las varianzas?',
+    type: 'choice',
+    options: [
+      { text: 'Sí, tiene lógica: si restas las medias, restas las varianzas.', correct: false },
+      { text: 'No. Las varianzas de variables independientes siempre se SUMAN: Var(X̄₁ − X̄₂) = Var₁/n₁ + Var₂/n₂. Al combinar dos fuentes de incertidumbre, la variabilidad total aumenta, nunca disminuye.', correct: true },
+      { text: 'Depende de si la correlación entre las sedes es positiva o negativa.', correct: false },
+      { text: 'No importa si se suma o resta, el resultado es similar.', correct: false },
+    ],
+    correctIdx: 1,
+    gain: 4000000,
+    loss: -5000000,
+    explanation: `<strong>Las varianzas de variables independientes siempre se SUMAN</strong>, sin importar si la operación entre las variables es una suma o una resta. Var(X−Y) = Var(X) + Var(Y) cuando X e Y son independientes. Intuitivamente: cada fuente aporta su propia incertidumbre, y la incertidumbre se acumula. El correcto sería Var(X̄₁ − X̄₂) = 0.8/n₁ + 0.5/n₂.`,
+  },
+  {
+    act: 4, actName: 'Expansión o Quiebra',
+    topic: 'Distribución Muestral — Probabilidad',
+    narrative: `Último trimestre. El inversionista dice que la cadena es rentable solo si el gasto promedio por cliente es <strong>mayor a $28.000</strong>. Ustedes saben que históricamente μ = $30.000 y σ = $8.000.
+    <div class="data-box">μ = $30.000, σ = $8.000<br>Muestra mensual: n = 64 clientes<br>SE = σ/√n = 8000/√64 = $1.000<br><br>Pregunta: ¿Cuál es la probabilidad de que X̄ < $28.000?<br>Z = (28000 − 30000) / 1000 = −2.0<br>P(Z < −2.0) = ?</div>
+    El inversionista amenaza con cerrar si el promedio cae por debajo de $28.000 en el monitoreo mensual.`,
+    question: '¿Qué tan preocupados deben estar?',
+    type: 'choice',
+    options: [
+      { text: 'Muy preocupados. $28.000 está solo $2.000 por debajo de la media. Es bastante probable que caiga ahí.', correct: false },
+      { text: 'Poco preocupados. Z = −2.0, y P(Z < −2) ≈ 0.0228 (2.28%). Solo hay ~2.3% de probabilidad de que el promedio mensual caiga por debajo de $28.000. El negocio es estable.', correct: true },
+      { text: 'No se puede calcular sin saber la distribución de los gastos individuales.', correct: false },
+      { text: 'Deberían subir los precios para asegurar que X̄ nunca baje de $28.000.', correct: false },
+    ],
+    correctIdx: 1,
+    gain: 5000000,
+    loss: -4000000,
+    explanation: `Z = (28000 − 30000)/1000 = <strong>−2.0</strong>. P(Z < −2.0) ≈ <strong>0.0228 (2.28%)</strong>. Solo hay ~2.3% de probabilidad de que el promedio de 64 clientes caiga por debajo de $28.000. Noten cómo el SE = $1.000 es mucho menor que σ = $8.000 — esa es la magia del tamaño de muestra: <strong>la variabilidad del promedio es mucho menor que la variabilidad individual</strong>.`,
+  },
+  {
+    act: 4, actName: 'Expansión o Quiebra',
+    topic: 'Decisión Integradora Final',
+    narrative: `<strong>Decisión final.</strong> Con todo lo aprendido hoy, deben elegir la estrategia de expansión para el próximo año:
+    <div class="data-box"><strong>Opción A — Abrir sede Cartago:</strong> Estudio de mercado con n = 601 (sin piloto, p̂=0.5). Costo del estudio: $12M. Resultado: 55% de interés. IC 95%: [51%, 59%]. Inversión total: $40M.<br><br><strong>Opción B — Ampliar Pereira:</strong> Datos internos robustos (n = 200). Satisfacción: 78%. Gasto promedio creciente. SE pequeño. Inversión: $25M.<br><br><strong>Opción C — Franquicia express sin estudio:</strong> Un empresario ofrece franquicia en Bogotá. No hay datos. "Confíen en mí, Bogotá es enorme." Inversión: $35M.</div>`,
+    question: '¿Qué estrategia eligen para el futuro de Sabor Criollo?',
+    type: 'choice',
+    options: [
+      { text: 'Opción A: Cartago tiene 55% de interés con IC [51%, 59%]. Es mayoría, aunque ajustada. El estudio fue riguroso.', correct: false },
+      { text: 'Opción B: Ampliar Pereira. Datos robustos, satisfacción alta con SE bajo, menor inversión, menor riesgo. Crecer sobre base sólida con evidencia estadística fuerte.', correct: true },
+      { text: 'Opción C: Bogotá es el mercado más grande del país. El potencial supera cualquier análisis estadístico.', correct: false },
+      { text: 'Opción A + C juntas: diversificar en dos mercados nuevos simultáneamente para maximizar alcance.', correct: false },
+    ],
+    correctIdx: 1,
+    gain: 10000000,
+    loss: -8000000,
+    explanation: `<strong>Opción B</strong> es la decisión estadísticamente fundamentada: datos internos con n grande, SE bajo, tendencia positiva, y la inversión más baja. Opción A tiene un IC que incluye valores apenas por encima de 50% — riesgo moderado. Opción C viola todo lo aprendido: <strong>tomar decisiones millonarias sin datos es exactamente lo que la estadística busca evitar</strong>. En administración, se crece sobre evidencia, no sobre intuición.`,
+  },
+];
+
+// ═══════════════════════════════════════
+//  UI FUNCTIONS
+// ═══════════════════════════════════════
+const $ = id => document.getElementById(id);
+
+function updateBalance() {
+  const el = $('balance');
+  el.textContent = fmt(state.balance);
+  el.className = 'balance ' + (state.balance >= 50000000 ? 'positive' : state.balance >= 35000000 ? 'positive' : 'negative');
+}
+
+function updateProgress() {
+  const pct = ((state.currentQ) / questions.length) * 100;
+  $('progressFill').style.width = pct + '%';
+}
+
+function updateTimer() {
+  const m = Math.floor(state.timerSeconds / 60);
+  const s = state.timerSeconds % 60;
+  const el = $('timer');
+  el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  if (state.timerSeconds <= 300) el.className = 'timer critical';
+  else if (state.timerSeconds <= 900) el.className = 'timer warning';
+  else el.className = 'timer';
+}
+
+function startTimer() {
+  state.timerInterval = setInterval(() => {
+    state.timerSeconds--;
+    updateTimer();
+    if (state.timerSeconds <= 0) {
+      clearInterval(state.timerInterval);
+      endGame();
+    }
+  }, 1000);
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+
+function getActForQuestion(idx) {
+  return questions[idx] ? questions[idx].act : null;
+}
+
+// ═══════════════════════════════════════
+//  RENDER QUESTION
+// ═══════════════════════════════════════
+function renderQuestion(idx) {
+  const q = questions[idx];
+  const container = $('screenQuestion');
+  $('actLabel').textContent = `Acto ${q.act} — ${q.actName}`;
+  updateProgress();
+
+  let html = `<div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Decisión ${idx + 1} de ${questions.length}</span>
+      <span class="q-topic">${q.topic}</span>
+    </div>
+    <div class="q-narrative">${q.narrative}</div>
+    <div class="q-question">${q.question}</div>`;
+
+  if (q.type === 'choice') {
+    html += `<div class="q-options">`;
+    const letters = ['A','B','C','D'];
+    q.options.forEach((opt, i) => {
+      html += `<button class="opt-btn" data-idx="${i}" onclick="selectOption(${idx}, ${i})">
+        <span class="opt-letter">${letters[i]}</span>
+        <span>${opt.text}</span>
+      </button>`;
+    });
+    html += `</div>`;
+  } else if (q.type === 'calc') {
+    html += `<div class="calc-section">
+      <label>Ingresa tu respuesta:</label>
+      <div class="calc-row">
+        <input type="number" class="calc-input" id="calcInput" placeholder="0" step="1">
+        <span class="calc-unit">${q.unit || ''}</span>
+      </div>
+    </div>
+    <button class="btn-confirm" id="btnCalcConfirm" onclick="submitCalc(${idx})">Confirmar Respuesta</button>`;
+  }
+
+  html += `<div id="resultArea"></div>`;
+  html += `</div>`;
+  container.innerHTML = html;
+  showScreen('screenQuestion');
+}
+
+// ═══════════════════════════════════════
+//  HANDLE ANSWERS
+// ═══════════════════════════════════════
+function selectOption(qIdx, optIdx) {
+  const q = questions[qIdx];
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach(b => { b.disabled = true; b.classList.remove('selected'); });
+
+  const selected = document.querySelector(`.opt-btn[data-idx="${optIdx}"]`);
+  const correct = document.querySelector(`.opt-btn[data-idx="${q.correctIdx}"]`);
+
+  if (optIdx === q.correctIdx) {
+    selected.classList.add('correct');
+    applyResult(qIdx, q.gain, true);
+  } else {
+    selected.classList.add('wrong');
+    correct.classList.add('correct');
+    applyResult(qIdx, q.loss, false);
+  }
+}
+
+function submitCalc(qIdx) {
+  const q = questions[qIdx];
+  const input = $('calcInput');
+  const val = parseFloat(input.value);
+  if (isNaN(val)) return;
+
+  $('btnCalcConfirm').disabled = true;
+  input.disabled = true;
+
+  const diff = Math.abs(val - q.correctValue) / q.correctValue;
+  const inRange = q.acceptRange && val >= q.acceptRange[0] && val <= q.acceptRange[1];
+  const tolPartial = q.tolerancePartial || q.tolerance * 3;
+
+  if (diff <= q.tolerance || (inRange && diff <= 0.02)) {
+    applyResult(qIdx, q.gain, true, val);
+  } else if (inRange || diff <= tolPartial) {
+    applyResult(qIdx, q.partialGain || Math.round(q.gain * 0.5), 'partial', val);
+  } else {
+    applyResult(qIdx, q.loss, false, val);
+  }
+}
+
+function applyResult(qIdx, amount, success, userVal) {
+  const q = questions[qIdx];
+  state.balance += amount;
+  updateBalance();
+
+  const isGain = amount >= 0;
+  let resultHtml = `<div class="result-panel ${isGain ? 'gain' : 'loss'}">
+    <div class="result-amount ${isGain ? 'gain' : 'loss'}">
+      ${isGain ? '+' : ''}${fmt(amount)}
+    </div>`;
+
+  if (success === 'partial') {
+    resultHtml += `<div class="result-explanation"><strong style="color:var(--accent-gold)">¡Casi! Respuesta aceptable.</strong> Tu valor: ${userVal}. Valor de referencia: ${q.correctValue}${q.acceptRange ? ` (rango válido: ${q.acceptRange[0]}–${q.acceptRange[1]})` : ''}.<br><br>${q.explanation}</div>`;
+  } else if (success) {
+    resultHtml += `<div class="result-explanation"><strong style="color:var(--green)">¡Decisión correcta!</strong><br><br>${q.explanation}</div>`;
+  } else {
+    resultHtml += `<div class="result-explanation"><strong style="color:var(--red)">Decisión incorrecta.</strong>${userVal !== undefined ? ` Tu valor: ${userVal}. Valor exacto: ${q.correctValue}.` : ''}<br><br>${q.explanation}</div>`;
+  }
+
+  resultHtml += `</div>`;
+  resultHtml += `<button class="btn-next" onclick="nextQuestion()">Siguiente Decisión →</button>`;
+
+  $('resultArea').innerHTML = resultHtml;
+  $('resultArea').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  state.log.push({
+    num: qIdx + 1,
+    topic: q.topic,
+    amount: amount,
+    correct: success === true,
+  });
+}
+
+// ═══════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════
+function nextQuestion() {
+  state.currentQ++;
+
+  if (state.currentQ >= questions.length) {
+    endGame();
+    return;
+  }
+
+  const prevAct = questions[state.currentQ - 1].act;
+  const nextAct = questions[state.currentQ].act;
+
+  if (nextAct !== prevAct) {
+    showActTransition(nextAct);
+  } else {
+    renderQuestion(state.currentQ);
+  }
+}
+
+function showActTransition(act) {
+  const titles = {
+    2: 'Acto 2 — Investigación de Mercado',
+    3: 'Acto 3 — Decisiones Operativas',
+    4: 'Acto 4 — Expansión o Quiebra',
+  };
+  const descs = {
+    2: 'Es hora de salir al campo. Necesitan datos reales para tomar decisiones informadas. ¿Cuántas encuestas? ¿Qué tan preciso? Cada encuesta cuesta dinero...',
+    3: 'Con los datos en mano, es momento de tomar decisiones operativas. Proveedores, procesos, satisfacción. Los números les dirán la verdad.',
+    4: 'Las decisiones finales definen el futuro de Sabor Criollo. Expansión, inversión o cierre. Todo lo que aprendieron se pone a prueba ahora.',
+  };
+
+  $('transTitle').textContent = titles[act] || `Acto ${act}`;
+  $('transDesc').textContent = descs[act] || '';
+  showScreen('screenTransition');
+}
+
+function nextAfterTransition() {
+  renderQuestion(state.currentQ);
+}
+
+// ═══════════════════════════════════════
+//  END GAME
+// ═══════════════════════════════════════
+function endGame() {
+  clearInterval(state.timerInterval);
+  state.running = false;
+
+  const money = state.balance;
+  let grade;
+  if (money >= 80000000) grade = '3.0';
+  else if (money >= 72000000) grade = '2.7';
+  else if (money >= 65000000) grade = '2.5';
+  else if (money >= 57000000) grade = '2.2';
+  else if (money >= 50000000) grade = '2.0';
+  else if (money >= 42000000) grade = '1.7';
+  else if (money >= 35000000) grade = '1.5';
+  else if (money >= 27000000) grade = '1.2';
+  else if (money >= 20000000) grade = '1.0';
+  else if (money >= 10000000) grade = '0.7';
+  else grade = '0.5';
+
+  $('finalNames').textContent = `${state.names[0]} & ${state.names[1]}`;
+  $('finalMoney').textContent = fmt(money);
+  $('finalMoney').className = 'final-money ' + (money >= 50000000 ? 'positive' : 'negative');
+  $('finalGrade').textContent = grade;
+
+  const logEl = $('decisionsLog');
+  let logHtml = '<h3>Resumen de Decisiones</h3>';
+  state.log.forEach(l => {
+    const isGain = l.amount >= 0;
+    logHtml += `<div class="log-item">
+      <span class="log-q">${l.num}. ${l.topic}</span>
+      <span class="log-result ${isGain ? 'gain' : 'loss'}">${isGain ? '+' : ''}${fmt(l.amount)}</span>
+    </div>`;
+  });
+  logEl.innerHTML = logHtml;
+
+  updateProgress();
+  showScreen('screenFinal');
+  $('topBar').style.display = 'none';
+
+  // ── Enviar resultados a Google Sheets ──
+  sendResults(money, grade);
+}
+
+const SHEET_URL = 'PEGAR_URL_APPS_SCRIPT_AQUI';
+
+function sendResults(money, grade) {
+  if (SHEET_URL.includes('PEGAR_URL')) {
+    console.warn('URL de Apps Script no configurada');
+    return;
+  }
+
+  const correctCount = state.log.filter(l => l.correct).length;
+  const totalQ = state.log.length;
+  const timeUsed = 3600 - state.timerSeconds;
+  const minUsed = Math.floor(timeUsed / 60);
+  const secUsed = timeUsed % 60;
+
+  const payload = {
+    timestamp: new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' }),
+    estudiante1: state.names[0],
+    estudiante2: state.names[1],
+    dineroFinal: money,
+    nota: grade,
+    correctas: correctCount,
+    totalPreguntas: totalQ,
+    tiempoUsado: `${minUsed}m ${secUsed}s`,
+    detalle: state.log.map(l => `${l.num}:${l.correct ? 'OK' : 'MAL'}(${l.amount > 0 ? '+' : ''}${l.amount/1000000}M)`).join(' | '),
+  };
+
+  const statusEl = document.createElement('p');
+  statusEl.style.cssText = 'text-align:center;margin-top:16px;font-family:var(--font-display);font-size:0.85rem;';
+  statusEl.textContent = 'Enviando resultados...';
+  statusEl.style.color = 'var(--accent-gold)';
+  $('screenFinal').querySelector('.final-screen').appendChild(statusEl);
+
+  fetch(SHEET_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  .then(() => {
+    statusEl.textContent = 'Resultados enviados al docente';
+    statusEl.style.color = 'var(--green)';
+  })
+  .catch(() => {
+    statusEl.textContent = 'Error al enviar. Muestra esta pantalla al docente.';
+    statusEl.style.color = 'var(--accent-coral)';
+  });
+}
+
+// ═══════════════════════════════════════
+//  START
+// ═══════════════════════════════════════
+const n1 = $('name1');
+const n2 = $('name2');
+const btnStart = $('btnStart');
+
+function checkNames() {
+  btnStart.disabled = !(n1.value.trim().length >= 2 && n2.value.trim().length >= 2);
+}
+n1.addEventListener('input', checkNames);
+n2.addEventListener('input', checkNames);
+
+btnStart.addEventListener('click', () => {
+  state.names = [n1.value.trim(), n2.value.trim()];
+  state.running = true;
+  $('topBar').style.display = 'flex';
+  updateBalance();
+  updateTimer();
+  startTimer();
+  renderQuestion(0);
+});
+</script>
+</body>
+</html>
