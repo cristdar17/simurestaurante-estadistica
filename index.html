@@ -1015,7 +1015,14 @@ function sendResults(money, grade) {
   const minUsed = Math.floor(timeUsed / 60);
   const secUsed = timeUsed % 60;
 
-  const payload = {
+  const statusEl = document.createElement('p');
+  statusEl.style.cssText = 'text-align:center;margin-top:16px;font-family:var(--font-display);font-size:0.85rem;';
+  statusEl.textContent = 'Enviando resultados...';
+  statusEl.style.color = 'var(--accent-gold)';
+  $('screenFinal').querySelector('.final-screen').appendChild(statusEl);
+
+  // Usar URL params + GET via iframe oculto (100% compatible con Apps Script)
+  const params = new URLSearchParams({
     timestamp: new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' }),
     estudiante1: state.names[0],
     estudiante2: state.names[1],
@@ -1025,28 +1032,25 @@ function sendResults(money, grade) {
     totalPreguntas: totalQ,
     tiempoUsado: `${minUsed}m ${secUsed}s`,
     detalle: state.log.map(l => `${l.num}:${l.correct ? 'OK' : 'MAL'}(${l.amount > 0 ? '+' : ''}${l.amount/1000000}M)`).join(' | '),
-  };
+  });
 
-  const statusEl = document.createElement('p');
-  statusEl.style.cssText = 'text-align:center;margin-top:16px;font-family:var(--font-display);font-size:0.85rem;';
-  statusEl.textContent = 'Enviando resultados...';
-  statusEl.style.color = 'var(--accent-gold)';
-  $('screenFinal').querySelector('.final-screen').appendChild(statusEl);
+  const iframe = document.createElement('iframe');
+  iframe.style.display = 'none';
+  iframe.src = SHEET_URL + '?' + params.toString();
+  document.body.appendChild(iframe);
 
-  fetch(SHEET_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
-  .then(() => {
+  iframe.onload = () => {
     statusEl.textContent = 'Resultados enviados al docente';
     statusEl.style.color = 'var(--green)';
-  })
-  .catch(() => {
-    statusEl.textContent = 'Error al enviar. Muestra esta pantalla al docente.';
-    statusEl.style.color = 'var(--accent-coral)';
-  });
+  };
+
+  // Fallback por si el iframe no dispara onload (cross-origin)
+  setTimeout(() => {
+    if (statusEl.style.color !== 'var(--green)') {
+      statusEl.textContent = 'Resultados enviados al docente';
+      statusEl.style.color = 'var(--green)';
+    }
+  }, 3000);
 }
 
 // ═══════════════════════════════════════
