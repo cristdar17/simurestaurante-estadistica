@@ -386,6 +386,11 @@ body {
         <input type="text" id="name1" placeholder="Nombre Estudiante 1" maxlength="40">
         <input type="text" id="name2" placeholder="Nombre Estudiante 2 (opcional)" maxlength="40">
       </div>
+      <div style="margin-bottom:20px;text-align:center;">
+        <p style="font-family:var(--font-display);font-size:0.85rem;color:var(--text-dim);margin-bottom:8px;">Tu código de verificación:</p>
+        <span id="verifyCode" style="font-family:var(--font-mono);font-size:2rem;font-weight:800;letter-spacing:6px;color:var(--accent-gold);background:var(--bg-surface);padding:10px 24px;border-radius:12px;border:1.5px solid var(--accent-gold-dim);display:inline-block;"></span>
+        <p style="font-family:var(--font-display);font-size:0.8rem;color:var(--accent-coral);margin-top:8px;">Dicta este código al docente antes de empezar</p>
+      </div>
       <button class="btn-start" id="btnStart" disabled>Asumir la Gerencia</button>
     </div>
   </div>
@@ -406,6 +411,7 @@ body {
   <div class="screen" id="screenFinal">
     <div class="final-screen">
       <p class="names-display" id="finalNames"></p>
+      <p style="font-family:var(--font-mono);font-size:1rem;color:var(--accent-gold);margin-bottom:4px;">Código: <span id="finalCode"></span></p>
       <h1>Jornada Terminada</h1>
       <div class="final-money" id="finalMoney"></div>
       <div class="final-grade">
@@ -977,7 +983,8 @@ function endGame() {
   else if (money >= 10000000) grade = '0.7';
   else grade = '0.5';
 
-  $('finalNames').textContent = `${state.names[0]} & ${state.names[1]}`;
+  $('finalNames').textContent = state.names[1] === '(Individual)' ? state.names[0] : `${state.names[0]} & ${state.names[1]}`;
+  $('finalCode').textContent = state.code;
   $('finalMoney').textContent = fmt(money);
   $('finalMoney').className = 'final-money ' + (money >= 50000000 ? 'positive' : 'negative');
   $('finalGrade').textContent = grade;
@@ -1028,6 +1035,7 @@ function sendResults(money, grade) {
 
   const iframe = sendToSheet({
     tipo: 'RESULTADO',
+    codigo: state.code,
     timestamp: new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' }),
     estudiante1: state.names[0],
     estudiante2: state.names[1],
@@ -1058,6 +1066,11 @@ const n1 = $('name1');
 const n2 = $('name2');
 const btnStart = $('btnStart');
 
+// Generar código de verificación alfanumérico de 4 caracteres
+const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+state.code = Array.from({length: 4}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+$('verifyCode').textContent = state.code;
+
 function checkNames() {
   btnStart.disabled = !(n1.value.trim().length >= 2);
 }
@@ -1076,6 +1089,7 @@ btnStart.addEventListener('click', () => {
   // Registrar entrada inmediata
   sendToSheet({
     tipo: 'INICIO',
+    codigo: state.code,
     timestamp: new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' }),
     estudiante1: state.names[0],
     estudiante2: state.names[1],
