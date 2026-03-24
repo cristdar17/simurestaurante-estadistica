@@ -1003,12 +1003,17 @@ function endGame() {
 
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyesI-Dcn1CjaIExcYp6iYqSMtEYTAk2-lhI1R0BmuL4z5ySFaJJ2TVN4eFvhVY6ZM7CQ/exec';
 
-function sendResults(money, grade) {
-  if (SHEET_URL.includes('PEGAR_URL')) {
-    console.warn('URL de Apps Script no configurada');
-    return;
-  }
+function sendToSheet(data) {
+  if (SHEET_URL.includes('PEGAR_URL')) return;
+  const params = new URLSearchParams(data);
+  const iframe = document.createElement('iframe');
+  iframe.style.display = 'none';
+  iframe.src = SHEET_URL + '?' + params.toString();
+  document.body.appendChild(iframe);
+  return iframe;
+}
 
+function sendResults(money, grade) {
   const correctCount = state.log.filter(l => l.correct).length;
   const totalQ = state.log.length;
   const timeUsed = 3600 - state.timerSeconds;
@@ -1021,8 +1026,8 @@ function sendResults(money, grade) {
   statusEl.style.color = 'var(--accent-gold)';
   $('screenFinal').querySelector('.final-screen').appendChild(statusEl);
 
-  // Usar URL params + GET via iframe oculto (100% compatible con Apps Script)
-  const params = new URLSearchParams({
+  const iframe = sendToSheet({
+    tipo: 'RESULTADO',
     timestamp: new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' }),
     estudiante1: state.names[0],
     estudiante2: state.names[1],
@@ -1034,22 +1039,15 @@ function sendResults(money, grade) {
     detalle: state.log.map(l => `${l.num}:${l.correct ? 'OK' : 'MAL'}(${l.amount > 0 ? '+' : ''}${l.amount/1000000}M)`).join(' | '),
   });
 
-  const iframe = document.createElement('iframe');
-  iframe.style.display = 'none';
-  iframe.src = SHEET_URL + '?' + params.toString();
-  document.body.appendChild(iframe);
-
-  iframe.onload = () => {
-    statusEl.textContent = 'Resultados enviados al docente';
-    statusEl.style.color = 'var(--green)';
-  };
-
-  // Fallback por si el iframe no dispara onload (cross-origin)
-  setTimeout(() => {
-    if (statusEl.style.color !== 'var(--green)') {
+  if (iframe) {
+    iframe.onload = () => {
       statusEl.textContent = 'Resultados enviados al docente';
       statusEl.style.color = 'var(--green)';
-    }
+    };
+  }
+  setTimeout(() => {
+    statusEl.textContent = 'Resultados enviados al docente';
+    statusEl.style.color = 'var(--green)';
   }, 3000);
 }
 
@@ -1074,6 +1072,20 @@ btnStart.addEventListener('click', () => {
   updateTimer();
   startTimer();
   renderQuestion(0);
+
+  // Registrar entrada inmediata
+  sendToSheet({
+    tipo: 'INICIO',
+    timestamp: new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' }),
+    estudiante1: state.names[0],
+    estudiante2: state.names[1],
+    dineroFinal: '',
+    nota: '',
+    correctas: '',
+    totalPreguntas: '',
+    tiempoUsado: '',
+    detalle: 'En curso...',
+  });
 });
 </script>
 </body>
