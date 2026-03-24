@@ -384,7 +384,7 @@ body {
       </div>
       <div class="names-input">
         <input type="text" id="name1" placeholder="Nombre Estudiante 1" maxlength="40">
-        <input type="text" id="name2" placeholder="Nombre Estudiante 2" maxlength="40">
+        <input type="text" id="name2" placeholder="Nombre Estudiante 2 (opcional)" maxlength="40">
       </div>
       <button class="btn-start" id="btnStart" disabled>Asumir la Gerencia</button>
     </div>
@@ -1059,13 +1059,13 @@ const n2 = $('name2');
 const btnStart = $('btnStart');
 
 function checkNames() {
-  btnStart.disabled = !(n1.value.trim().length >= 2 && n2.value.trim().length >= 2);
+  btnStart.disabled = !(n1.value.trim().length >= 2);
 }
 n1.addEventListener('input', checkNames);
 n2.addEventListener('input', checkNames);
 
 btnStart.addEventListener('click', () => {
-  state.names = [n1.value.trim(), n2.value.trim()];
+  state.names = [n1.value.trim(), n2.value.trim() || '(Individual)'];
   state.running = true;
   $('topBar').style.display = 'flex';
   updateBalance();
